@@ -65,8 +65,9 @@ export async function mealRoutes(app: FastifyInstance) {
 
     const meals = await knex('meals')
       .where({
-        user_id: userId
-      }).select()
+        user_id: userId,
+      })
+      .select()
 
     return { meals }
   })
@@ -91,9 +92,53 @@ export async function mealRoutes(app: FastifyInstance) {
     const meal = await knex('meals')
       .where({
         user_id: userId,
-        id
-      }).first()
+        id,
+      })
+      .first()
 
     return meal
+  })
+  app.get('/summary', async (request, reply) => {
+    const sessionId = request.cookies.sessionId
+
+    const user = await knex('users')
+      .where('session_id', sessionId)
+      .select('id')
+      .first()
+
+    if (user === undefined) {
+      return reply.status(403).send('User not logged')
+    }
+
+    const userId = user.id
+
+    const totalMeals = (await knex('meals')
+      .where({ user_id: userId })
+      .count('id as count')
+      .first()) ?? { count: 0 }
+    const totalDietMeals = (await knex('meals')
+      .where('user_id', userId)
+      .where('is_on_diet', 1)
+      .count('id as count')
+      .first()) ?? { count: 0 }
+    const totalNonDietMeals = (await knex('meals')
+      .where('user_id', userId)
+      .where('is_on_diet', 0)
+      .count('id as count')
+      .first()) ?? { count: 0 }
+    const bestDietSequence = await knex('meals')
+      .select('id', 'meal_datetime')
+      .where('user_id', userId)
+      .where('is_on_diet', 1)
+      .orderBy('meal_datetime', 'asc');
+
+    const summary = {
+      totalMeals: totalMeals.count,
+      totalDietMeals: totalDietMeals.count,
+      totalNonDietMeals: totalNonDietMeals.count,
+      bestDietSequence: bestDietSequence,
+    }
+
+    return { summary }
   })
 }
