@@ -50,4 +50,50 @@ export async function mealRoutes(app: FastifyInstance) {
 
     return reply.status(201).send()
   })
+  app.get('/', async (request, reply) => {
+    const sessionId = request.cookies.sessionId
+
+    const user = await knex('users')
+      .where('session_id', sessionId)
+      .select('id')
+      .first()
+
+    if (user === undefined) {
+      return reply.status(403).send('User not logged')
+    }
+    const userId = user.id
+
+    const meals = await knex('meals')
+      .where({
+        user_id: userId
+      }).select()
+
+    return { meals }
+  })
+  app.get('/:id', async (request, reply) => {
+    const sessionId = request.cookies.sessionId
+
+    const user = await knex('users')
+      .where('session_id', sessionId)
+      .select('id')
+      .first()
+
+    if (user === undefined) {
+      return reply.status(403).send('User not logged')
+    }
+
+    const userId = user.id
+    const getMealsParamsSchema = z.object({
+      id: z.string().uuid(),
+    })
+    const { id } = getMealsParamsSchema.parse(request.params)
+
+    const meal = await knex('meals')
+      .where({
+        user_id: userId,
+        id
+      }).first()
+
+    return meal
+  })
 }
