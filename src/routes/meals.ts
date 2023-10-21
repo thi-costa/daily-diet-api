@@ -130,15 +130,50 @@ export async function mealRoutes(app: FastifyInstance) {
       .select('id', 'meal_datetime')
       .where('user_id', userId)
       .where('is_on_diet', 1)
-      .orderBy('meal_datetime', 'asc');
+      .orderBy('meal_datetime', 'asc')
 
     const summary = {
       totalMeals: totalMeals.count,
       totalDietMeals: totalDietMeals.count,
       totalNonDietMeals: totalNonDietMeals.count,
-      bestDietSequence: bestDietSequence,
+      bestDietSequence,
     }
 
     return { summary }
+  })
+  app.delete('/:id', async (request, reply) => {
+    const sessionId = request.cookies.sessionId
+
+    const user = await knex('users')
+      .where('session_id', sessionId)
+      .select('id')
+      .first()
+    console.log('user logged')
+    
+    if (user === undefined) {
+      return reply.status(403).send('User not logged')
+    }
+    
+    const userId = user.id
+    const getMealsParamsSchema = z.object({
+      id: z.string().uuid(),
+    })
+    const { id } = getMealsParamsSchema.parse(request.params)
+    console.log('id_meal: ' + id)
+
+    
+    const meal = await knex('meals')
+    .where({
+      user_id: userId,
+      id,
+    })
+    .del()
+
+    console.log('Meal deleted: ' + meal)
+    if (meal === 0) {
+      return reply.status(404).send('Meal does not exist')
+    }
+
+    return reply.status(204).send()
   })
 }
