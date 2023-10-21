@@ -6,7 +6,7 @@
   - Descrição
   - Data e Hora
   - Está dentro ou não da dieta
-- [ ] Deve ser possível editar uma refeição
+- [x] Deve ser possível editar uma refeição
 - [x] Deve ser possível apagar uma refeição
 - [x] Deve ser possível listar todas as refeições de um usuário
 - [x] Deve ser possível visualizar uma única refeição
@@ -50,4 +50,13 @@ $ npm run knex migrate:up --all
 
 # Rodar a próxima migration pendente
 $ npm run knex migrate:up
+```
+
+## Instalar dependências e rodar aplicação
+```bash
+# Instalar dependências
+$ npm install
+
+# Rodar em ambiente de desenvolvimento
+$ npm run dev
 ```
